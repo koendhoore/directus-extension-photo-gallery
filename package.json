@@ -1,0 +1,57 @@
+{
+  "name": "directus-extension-photo-gallery",
+  "version": "1.1.0",
+  "description": "A fullscreen, drag-and-drop sortable photo gallery interface for Directus files (M2M) relations, with an in-panel file-info editor and image editor.",
+  "type": "module",
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-custom-interface",
+    "directus-interface",
+    "gallery",
+    "photo-gallery",
+    "sortable",
+    "files"
+  ],
+  "license": "MIT",
+  "author": "koendhoore (https://github.com/koendhoore)",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "directus:extension": {
+    "type": "interface",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^10.10.0 || ^11.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "cropperjs": "^1.6.2",
+    "sortablejs": "^1.15.6"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^13.0.2",
+    "@types/sortablejs": "^1.15.8",
+    "typescript": "^5.6.3",
+    "vue": "^3.5.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koendhoore/directus-extension-photo-gallery.git"
+  },
+  "homepage": "https://github.com/koendhoore/directus-extension-photo-gallery#readme",
+  "bugs": {
+    "url": "https://github.com/koendhoore/directus-extension-photo-gallery/issues"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "directus-extension-photo-gallery",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A fullscreen, drag-and-drop sortable photo gallery interface for Directus files (M2M) relations, with an in-panel file-info editor and image editor.",
   "type": "module",
   "keywords": [

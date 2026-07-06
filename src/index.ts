@@ -24,19 +24,20 @@ export default defineInterface({
 			},
 		},
 		{
-			field: 'thumbnailFit',
-			name: 'Thumbnail Fit',
+			field: 'insertPosition',
+			name: 'New Photos Position',
 			type: 'string',
-			schema: { default_value: 'cover' },
+			schema: { default_value: 'bottom' },
 			meta: {
-				interface: 'select-dropdown',
-				width: 'half',
+				interface: 'select-radio',
+				width: 'full',
 				options: {
 					choices: [
-						{ text: 'Cover (crop to fill)', value: 'cover' },
-						{ text: 'Contain (letterbox)', value: 'contain' },
+						{ text: 'At the end (after existing photos)', value: 'bottom' },
+						{ text: 'On top (before existing photos)', value: 'top' },
 					],
 				},
+				note: 'Where newly uploaded photos are placed in the gallery.',
 			},
 		},
 	],

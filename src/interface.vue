@@ -36,9 +36,9 @@ const props = withDefaults(
 		primaryKey: string | number;
 		disabled?: boolean;
 		folder?: string | null;
-		thumbnailFit?: string;
+		insertPosition?: string;
 	}>(),
-	{ value: null, disabled: false, folder: null, thumbnailFit: 'cover' }
+	{ value: null, disabled: false, folder: null, insertPosition: 'bottom' }
 );
 
 const emit = defineEmits<{ (e: 'input', value: Record<string, unknown> | null): void }>();
@@ -240,10 +240,10 @@ function emitValue() {
 
 /* ----------------------- Add / link a file -------------------------- */
 
-async function linkFile(file: DirectusFile) {
+/** Create a junction link (immediate) or a staged item, WITHOUT inserting it. */
+async function createGalleryItem(file: DirectusFile): Promise<GalleryItem | null> {
 	const info = relationInfo.value;
-	if (!info) return;
-	const nextSort = items.value.length + 1;
+	if (!info) return null;
 
 	if (immediate.value) {
 		try {
@@ -251,19 +251,18 @@ async function linkFile(file: DirectusFile) {
 				[info.reverseField]: props.primaryKey,
 				[info.junctionField]: file.id,
 			};
-			if (info.sortField) payload[info.sortField] = nextSort;
 			const res = await api.post(`/items/${info.junctionCollection}`, payload, { params: { fields: ['id'] } });
 			const junctionId = res.data?.data?.id;
-			items.value.push({ key: `j-${junctionId}`, junctionId, fileId: file.id, file, isNew: false, rev: 0, sort: nextSort });
+			// sort is normalised right after the batch is inserted.
+			return { key: `j-${junctionId}`, junctionId, fileId: file.id, file, isNew: false, rev: 0, sort: 0 };
 		} catch (err) {
 			notify('Could not add file to gallery', 'error');
 			// eslint-disable-next-line no-console
 			console.error('[photo-gallery] link failed', err);
+			return null;
 		}
-	} else {
-		items.value.push({ key: nextTempKey(), junctionId: null, fileId: file.id, file, isNew: true, rev: 0, sort: nextSort });
-		emitValue();
 	}
+	return { key: nextTempKey(), junctionId: null, fileId: file.id, file, isNew: true, rev: 0, sort: 0 };
 }
 
 /* ----------------------------- Reorder ------------------------------ */
@@ -274,11 +273,11 @@ function moveInArray(oldIndex: number, newIndex: number) {
 	if (!moved) return;
 	arr.splice(newIndex, 0, moved);
 	items.value = arr;
-	if (immediate.value) void persistSort();
+	if (immediate.value) void persistSort('Photo order updated');
 	else emitValue();
 }
 
-async function persistSort() {
+async function persistSort(flashMsg?: string) {
 	const info = relationInfo.value;
 	if (!info?.sortField || !immediate.value) return;
 	const changed: { id: string | number; sort: number }[] = [];
@@ -294,7 +293,7 @@ async function persistSort() {
 		await Promise.all(
 			changed.map((c) => api.patch(`/items/${info.junctionCollection}/${c.id}`, { [info.sortField as string]: c.sort }))
 		);
-		notify('Photo order updated');
+		if (flashMsg) notify(flashMsg);
 	} catch (err) {
 		notify('Could not save the new order', 'error');
 		// eslint-disable-next-line no-console
@@ -643,6 +642,7 @@ async function uploadFiles(files: File[]) {
 	uploading.value = true;
 	uploadProgress.value = 0;
 	let done = 0;
+	const added: GalleryItem[] = [];
 	try {
 		for (const file of files) {
 			const form = new FormData();
@@ -653,9 +653,18 @@ async function uploadFiles(files: File[]) {
 					if (evt.total) uploadProgress.value = Math.round(((done + evt.loaded / evt.total) / files.length) * 100);
 				},
 			});
-			if (res.data?.data) await linkFile(res.data.data as DirectusFile);
+			if (res.data?.data) {
+				const item = await createGalleryItem(res.data.data as DirectusFile);
+				if (item) added.push(item);
+			}
 			done++;
 			uploadProgress.value = Math.round((done / files.length) * 100);
+		}
+		if (added.length) {
+			if (props.insertPosition === 'top') items.value = [...added, ...items.value];
+			else items.value = [...items.value, ...added];
+			if (immediate.value) await persistSort();
+			else emitValue();
 		}
 		notify(`Uploaded ${files.length} file${files.length === 1 ? '' : 's'}`);
 	} catch (err) {
@@ -685,7 +694,7 @@ function assetUrl(fileId: string, opts: { thumb?: boolean; rev?: number } = {}) 
 	const base = (api.defaults.baseURL || '').replace(/\/$/, '');
 	const params: string[] = [];
 	if (opts.thumb) {
-		params.push('width=500', 'height=500', 'quality=80', `fit=${props.thumbnailFit === 'contain' ? 'contain' : 'cover'}`);
+		params.push('width=500', 'height=500', 'quality=80', 'fit=cover');
 	}
 	if (opts.rev) params.push(`v=${opts.rev}`);
 	const token = authToken();
@@ -695,7 +704,7 @@ function assetUrl(fileId: string, opts: { thumb?: boolean; rev?: number } = {}) 
 function isImage(file: DirectusFile) {
 	return !!file.type && file.type.startsWith('image/');
 }
-function iconFor(file: DirectusFile) {
+function iconFor(file: Partial<DirectusFile>) {
 	const t = file.type || '';
 	if (t.startsWith('video/')) return 'movie';
 	if (t.startsWith('audio/')) return 'audiotrack';

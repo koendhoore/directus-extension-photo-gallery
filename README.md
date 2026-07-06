@@ -5,7 +5,7 @@ into a fullscreen, drag‑and‑drop **sortable** photo gallery — with an in�
 file‑info editor and an in‑panel image editor.
 
 - **Type:** interface (relational / files)
-- **Directus:** `^10.10.0 || ^11.0.0`
+- **Directus:** `^10.10.0 || ^11.0.0 || ^12.0.0`
 
 ---
 
@@ -100,13 +100,14 @@ If the sort field is missing, the gallery still works but shows a
 
 ## Options
 
-| Option           | Description                                              |
-| ---------------- | -------------------------------------------------------- |
-| **Upload Folder** | Folder that newly uploaded files are placed into.       |
-| **Thumbnail Fit** | `cover` (crop to fill) or `contain` (letterbox).        |
+| Option                  | Description                                                    |
+| ----------------------- | ------------------------------------------------------------- |
+| **Upload Folder**       | Folder that newly uploaded files are placed into.             |
+| **New Photos Position** | Whether newly uploaded photos are added **at the end** (default) or **on top** of the existing photos. Set per field. |
 
 Tile size is controlled from inside the gallery (S / M / L / XL); there is no
-column setting — the grid reflows with the window width.
+column setting — the grid reflows with the window width. Thumbnails always use
+`cover` (crop to fill).
 
 ---
 
